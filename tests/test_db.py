@@ -3,7 +3,19 @@ from dataclasses import asdict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ecommerce.database import get_session
 from ecommerce.models import User
+
+
+def test_get_session_function():
+    session_gen = get_session()
+    session = next(session_gen)
+    assert session is not None
+    # finaliza o generator
+    try:
+        next(session_gen)
+    except StopIteration:
+        pass
 
 
 def test_create_user(session: Session, mock_db_time):
@@ -24,6 +36,7 @@ def test_create_user(session: Session, mock_db_time):
     )
 
     assert asdict(user_db) == {
+        'id': 1,
         'name': 'John Doe',
         'email': 'john.doe@example.com',
         'password': '123456',

@@ -1,28 +1,42 @@
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Generator
+from http import HTTPStatus
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from ecommerce.app import app
+from ecommerce.database import get_session
 from ecommerce.models import table_registry
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client(session: Session) -> TestClient:
+    def get_session_override():
+        return session
+
+    app.dependency_overrides[get_session] = get_session_override
+    with TestClient(app) as client:
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope='session')
 def engine() -> Engine:
-    return create_engine('sqlite:///:memory:')
+    return create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
 
 
-@pytest.fixture(scope='session')
-def session(engine: Engine) -> Generator[Session, None, None]:
+@pytest.fixture
+def session(engine: Engine) -> Session:
+    table_registry.metadata.drop_all(engine)
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -49,3 +63,27 @@ def _mock_db_time(*, model, time=datetime(2024, 1, 1)):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest.fixture
+def create_user(client: TestClient):
+    def _create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='secret',
+        phone_number=None,
+    ):
+        response = client.post(
+            '/users/',
+            json={
+                'name': name,
+                'email': email,
+                'password': password,
+                'phone_number': phone_number
+            },
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        return response.json()
+
+    return _create_user
