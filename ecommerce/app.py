@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
 from ecommerce.models import User
-from ecommerce.schemas import UserList, UserRead, UserSchema
+from ecommerce.schemas import UserList, UserRead, UserSchema, UserUpdate
 
 app = FastAPI()
 
@@ -60,6 +60,72 @@ def read_user(user_id: str, session: Session = Depends(get_session)):
         )
 
     return user
+
+
+@app.put('/users/{user_id}/', response_model=UserRead)
+def update_user(
+    user_id: str,
+    user_update: UserUpdate,
+    session: Session = Depends(get_session)
+):
+
+    db_user = session.scalar(
+        select(User).where(User.public_id == user_id)
+    )
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="User not found."
+        )
+
+    if user_update.email and user_update.email != db_user.email:
+        existing_user = session.scalar(
+            select(User).where(User.email == user_update.email)
+        )
+        if existing_user:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail="Email already in use."
+            )
+
+    if user_update.phone_number and \
+        user_update.phone_number != db_user.phone_number:
+
+        existing_user = session.scalar(
+            select(User).where(User.phone_number == user_update.phone_number)
+        )
+        if existing_user:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail="Phone number already in use."
+            )
+
+    update_data = user_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_user, field, value)
+
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
+
+
+@app.delete('/users/{user_id}/', status_code=HTTPStatus.NO_CONTENT)
+def delete_user(
+    user_id: str,
+    session: Session = Depends(get_session)
+):
+    db_user = session.scalar(
+        select(User).where(User.public_id == user_id)
+    )
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="User not found."
+        )
+
+    session.delete(db_user)
+    session.commit()
 
 
 @app.get('/users/', response_model=UserList)

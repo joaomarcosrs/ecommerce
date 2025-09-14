@@ -19,6 +19,13 @@ class UserRead(BaseModel):
     updated_at: datetime
 
 
+class UserUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+    phone_number: str | None = None
+    password: str | None = None
+
+
 class UserList(BaseModel):
     users: list[UserRead]
     total: int
