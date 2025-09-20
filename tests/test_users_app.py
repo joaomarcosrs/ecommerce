@@ -3,6 +3,11 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
+# Constantes para mensagens de erro
+PASSWORD_REQUIRED_MSG = (
+    'Both current_password and password are required to change password.'
+)
+
 
 def test_create_user_success(
     client: TestClient,
@@ -279,32 +284,6 @@ def test_update_user_same_phone(
     assert updated_user['phone_number'] == '1234567890'
 
 
-def test_update_user_password(
-    client: TestClient,
-    create_user
-):
-    user = create_user(
-        name='John Doe',
-        email='john.doe@example.com',
-        password='old_password'
-    )
-
-    update_data = {
-        'password': 'new_password'
-    }
-
-    response = client.put(
-        f'/auth/me/{user["public_id"]}/',
-        json=update_data
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    updated_user = response.json()
-    assert updated_user['name'] == 'John Doe'
-    assert updated_user['email'] == 'john.doe@example.com'
-
-
 def test_delete_user_success(
     client: TestClient,
     create_user
@@ -346,3 +325,203 @@ def test_delete_user_verify_deletion(
     get_response = client.get(f'/auth/me/{user["public_id"]}/')
     assert get_response.status_code == HTTPStatus.NOT_FOUND
     assert get_response.json()['detail'] == 'User not found.'
+
+
+# Testes para verificação de senha no update
+def test_update_user_password_success(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'current_password': 'old_password',
+        'password': 'new_password'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    updated_user = response.json()
+    assert updated_user['name'] == 'John Doe'
+    assert updated_user['email'] == 'john.doe@example.com'
+
+
+def test_update_user_password_wrong_current_password(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'current_password': 'wrong_password',
+        'password': 'new_password'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()['detail'] == 'Current password is incorrect.'
+
+
+def test_update_user_password_missing_current_password(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'password': 'new_password'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()['detail'] == PASSWORD_REQUIRED_MSG
+
+
+def test_update_user_password_missing_new_password(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'current_password': 'old_password'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()['detail'] == PASSWORD_REQUIRED_MSG
+
+
+def test_update_user_without_password_fields(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'name': 'John Updated',
+        'email': 'john.updated@example.com'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    updated_user = response.json()
+    assert updated_user['name'] == 'John Updated'
+    assert updated_user['email'] == 'john.updated@example.com'
+
+
+def test_update_user_password_with_other_fields(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password',
+        phone_number='1234567890'
+    )
+
+    update_data = {
+        'name': 'John Updated',
+        'current_password': 'old_password',
+        'password': 'new_password',
+        'phone_number': '9876543210'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    updated_user = response.json()
+    assert updated_user['name'] == 'John Updated'
+    assert updated_user['phone_number'] == '9876543210'
+
+
+def test_update_user_password_empty_current_password(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'current_password': '',
+        'password': 'new_password'
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()['detail'] == PASSWORD_REQUIRED_MSG
+
+
+def test_update_user_password_empty_new_password(
+    client: TestClient,
+    create_user
+):
+    user = create_user(
+        name='John Doe',
+        email='john.doe@example.com',
+        password='old_password'
+    )
+
+    update_data = {
+        'current_password': 'old_password',
+        'password': ''
+    }
+
+    response = client.put(
+        f'/auth/me/{user["public_id"]}/',
+        json=update_data
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()['detail'] == PASSWORD_REQUIRED_MSG

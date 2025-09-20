@@ -23,6 +23,7 @@ class UserUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
     phone_number: str | None = None
+    current_password: str | None = None
     password: str | None = None
 
 
