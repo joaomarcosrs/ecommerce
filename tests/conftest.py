@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from ecommerce.app import app
 from ecommerce.database import get_session
-from ecommerce.models import table_registry
+from ecommerce.public.models import table_registry
 
 
 @pytest.fixture

@@ -30,7 +30,10 @@ class User:
         unique=True,
         nullable=False
     )
-    password: Mapped[str]
+    password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
     phone_number: Mapped[str] = mapped_column(
         String(255),
         unique=True,
@@ -50,7 +53,7 @@ class User:
         init=False
     )
     public_id: Mapped[str] = mapped_column(
-        String(36),
+        String(26),
         nullable=False,
         default_factory=generate_public_id
     )

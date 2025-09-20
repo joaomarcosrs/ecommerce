@@ -75,7 +75,7 @@ def test_read_user_not_found(
     fake_user_id = str(uuid.uuid4())
 
     response = client.get(
-        url=f'/auth/me/{fake_user_id}/',
+        url=f'/users/me/{fake_user_id}/',
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -91,7 +91,7 @@ def test_read_user(
         email='john.doe@example.com'
     )
     response = client.get(
-        url=f'/auth/me/{user['public_id']}/',
+        url=f'/users/me/{user['public_id']}/',
     )
     assert response.status_code == HTTPStatus.OK
 
@@ -117,7 +117,7 @@ def test_update_user_success(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -145,7 +145,7 @@ def test_update_user_partial(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -167,7 +167,7 @@ def test_update_user_not_found(
     }
 
     response = client.put(
-        f'/auth/me/{fake_user_id}/',
+        f'/users/me/{fake_user_id}/',
         json=update_data
     )
 
@@ -194,7 +194,7 @@ def test_update_user_email_conflict(
     }
 
     response = client.put(
-        f'/auth/me/{user1["public_id"]}/',
+        f'/users/me/{user1["public_id"]}/',
         json=update_data
     )
 
@@ -223,7 +223,7 @@ def test_update_user_phone_conflict(
     }
 
     response = client.put(
-        f'/auth/me/{user1["public_id"]}/',
+        f'/users/me/{user1["public_id"]}/',
         json=update_data
     )
 
@@ -246,7 +246,7 @@ def test_update_user_same_email(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -273,7 +273,7 @@ def test_update_user_same_phone(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -293,7 +293,7 @@ def test_delete_user_success(
         email='john.doe@example.com'
     )
 
-    response = client.delete(f'/auth/me/{user["public_id"]}/')
+    response = client.delete(f'/users/me/{user["public_id"]}/')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted.'}
@@ -304,7 +304,7 @@ def test_delete_user_not_found(
 ):
     fake_user_id = str(uuid.uuid4())
 
-    response = client.delete(f'/auth/me/{fake_user_id}/')
+    response = client.delete(f'/users/me/{fake_user_id}/')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json()['detail'] == 'User not found.'
@@ -327,7 +327,7 @@ def test_update_user_password_success(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -353,7 +353,7 @@ def test_update_user_password_wrong_current_password(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -376,7 +376,7 @@ def test_update_user_password_missing_current_password(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -399,7 +399,7 @@ def test_update_user_password_missing_new_password(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -423,7 +423,7 @@ def test_update_user_without_password_fields(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -452,7 +452,7 @@ def test_update_user_password_with_other_fields(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -478,7 +478,7 @@ def test_update_user_password_empty_current_password(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -502,7 +502,7 @@ def test_update_user_password_empty_new_password(
     }
 
     response = client.put(
-        f'/auth/me/{user["public_id"]}/',
+        f'/users/me/{user["public_id"]}/',
         json=update_data
     )
 

@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
-from ecommerce.models import User
+from ecommerce.public.models import User
 
 
 def test_get_session_function():

@@ -17,7 +17,7 @@ def test_create_token_for_access_success(
     )
 
     response = client.post(
-        url='/token/',
+        url='/auth/token/',
         data={
             'username': user['email'],
             'password': password
@@ -44,7 +44,7 @@ def test_create_token_for_access_unauthorized(
     )
 
     response = client.post(
-        url='/token/',
+        url='/auth/token/',
         data={
             'username': user['email'],
             'password': 'wrong_password'
@@ -55,7 +55,7 @@ def test_create_token_for_access_unauthorized(
     assert response.json()['detail'] == 'Incorrect email or password.'
 
     response2 = client.post(
-        url='/token/',
+        url='/auth/token/',
         data={
             'username': 'wrong_email@example.com',
             'password': password
