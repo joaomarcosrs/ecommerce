@@ -3,7 +3,6 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
-# Constantes para mensagens de erro
 PASSWORD_REQUIRED_MSG = (
     'Both current_password and password are required to change password.'
 )

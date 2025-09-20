@@ -3,10 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
-class Message(BaseModel):
-    message: str
-
-
 class UserBase(BaseModel):
     name: str
     email: EmailStr
@@ -29,8 +25,3 @@ class UserRead(UserBase):
     public_id: str
     created_at: datetime
     updated_at: datetime
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str

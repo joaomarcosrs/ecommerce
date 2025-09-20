@@ -5,8 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
-from ecommerce.public.models import User
-from ecommerce.public.schemas import Message, UserRead, UserUpdate
+from ecommerce.public.models.users import User
+from ecommerce.public.schemas.common import Message
+from ecommerce.public.schemas.users import UserRead, UserUpdate
 from ecommerce.security import get_password_hash, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])

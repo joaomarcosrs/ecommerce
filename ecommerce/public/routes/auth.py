@@ -6,8 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
-from ecommerce.public.models import User
-from ecommerce.public.schemas import Token, UserCreate, UserRead
+from ecommerce.public.models.users import User
+from ecommerce.public.schemas.auth import Token
+from ecommerce.public.schemas.users import UserCreate, UserRead
 from ecommerce.security import (
     create_access_token,
     get_password_hash,
