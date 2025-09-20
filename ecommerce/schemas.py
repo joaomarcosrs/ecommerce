@@ -7,23 +7,17 @@ class Message(BaseModel):
     message: str
 
 
-class UserSchema(BaseModel):
+class UserBase(BaseModel):
     name: str
     email: EmailStr
+    phone_number: str | None = None
+
+
+class UserCreate(UserBase):
     password: str
-    phone_number: str | None = None
 
 
-class UserRead(BaseModel):
-    public_id: str
-    name: str
-    email: EmailStr
-    phone_number: str | None = None
-    created_at: datetime
-    updated_at: datetime
-
-
-class UserUpdate(BaseModel):
+class UserUpdate(UserBase):
     name: str | None = None
     email: EmailStr | None = None
     phone_number: str | None = None
@@ -31,9 +25,10 @@ class UserUpdate(BaseModel):
     password: str | None = None
 
 
-class UserList(BaseModel):
-    users: list[UserRead]
-    total: int
+class UserRead(UserBase):
+    public_id: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class Token(BaseModel):
