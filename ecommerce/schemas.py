@@ -3,6 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
+class Message(BaseModel):
+    message: str
+
+
 class UserSchema(BaseModel):
     name: str
     email: EmailStr
@@ -30,3 +34,8 @@ class UserUpdate(BaseModel):
 class UserList(BaseModel):
     users: list[UserRead]
     total: int
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

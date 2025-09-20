@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
 from ecommerce.models import User
-from ecommerce.schemas import UserRead, UserSchema, UserUpdate
+from ecommerce.schemas import Message, UserRead, UserSchema, UserUpdate
 from ecommerce.security import get_password_hash, verify_password
 
 app = FastAPI()
@@ -157,7 +157,7 @@ def update_user(
 
 @app.delete(
     path='/auth/me/{user_id}/',
-    status_code=HTTPStatus.NO_CONTENT
+    response_model=Message,
 )
 def delete_user(
     user_id: str,
@@ -174,3 +174,7 @@ def delete_user(
 
     session.delete(db_user)
     session.commit()
+
+    return {
+        'message': 'User deleted.'
+    }
