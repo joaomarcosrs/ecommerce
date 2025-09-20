@@ -33,11 +33,12 @@ def test_create_user_conflict(
         'phone_number': None
     }
 
-    response1 = client.post('/users/', json=user_data)
+    response1 = client.post('/auth/register/', json=user_data)
     assert response1.status_code == HTTPStatus.CREATED
 
-    response2 = client.post('/users/', json=user_data)
+    response2 = client.post('/auth/register/', json=user_data)
     assert response2.status_code == HTTPStatus.CONFLICT
+    assert response2.json()['detail'] == 'Email already in use.'
 
 
 def test_create_user_conflict_phone(
@@ -57,7 +58,7 @@ def test_create_user_conflict_phone(
         'phone_number': '1234567890',
     }
 
-    response = client.post('/users/', json=user_data)
+    response = client.post('/auth/register/', json=user_data)
 
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json()['detail'] == 'Phone number already in use.'
@@ -69,7 +70,7 @@ def test_read_user_not_found(
     fake_user_id = str(uuid.uuid4())
 
     response = client.get(
-        url=f'/users/{fake_user_id}/',
+        url=f'/auth/me/{fake_user_id}/',
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -85,7 +86,7 @@ def test_read_user(
         email='john.doe@example.com'
     )
     response = client.get(
-        url=f'/users/{user['public_id']}/',
+        url=f'/auth/me/{user['public_id']}/',
     )
     assert response.status_code == HTTPStatus.OK
 
@@ -93,24 +94,6 @@ def test_read_user(
     assert body['public_id'] == user['public_id']
     assert body['name'] == 'John Doe'
     assert body['email'] == 'john.doe@example.com'
-
-
-def test_read_users(
-    client: TestClient,
-    create_user
-):
-    user1 = create_user(name='Alice', email='alice@example.com')
-    user2 = create_user(name='Bob', email='bob@example.com')
-
-    response = client.get('/users/', params={'skip': 0, 'limit': 10})
-    assert response.status_code == HTTPStatus.OK
-
-    body = response.json()
-    emails = [u['email'] for u in body['users']]
-
-    assert body['total'] == len([user1, user2])
-    assert user1['email'] in emails
-    assert user2['email'] in emails
 
 
 def test_update_user_success(
@@ -129,7 +112,7 @@ def test_update_user_success(
     }
 
     response = client.put(
-        f'/users/{user["public_id"]}/',
+        f'/auth/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -157,7 +140,7 @@ def test_update_user_partial(
     }
 
     response = client.put(
-        f'/users/{user["public_id"]}/',
+        f'/auth/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -179,7 +162,7 @@ def test_update_user_not_found(
     }
 
     response = client.put(
-        f'/users/{fake_user_id}/',
+        f'/auth/me/{fake_user_id}/',
         json=update_data
     )
 
@@ -206,7 +189,7 @@ def test_update_user_email_conflict(
     }
 
     response = client.put(
-        f'/users/{user1["public_id"]}/',
+        f'/auth/me/{user1["public_id"]}/',
         json=update_data
     )
 
@@ -235,7 +218,7 @@ def test_update_user_phone_conflict(
     }
 
     response = client.put(
-        f'/users/{user1["public_id"]}/',
+        f'/auth/me/{user1["public_id"]}/',
         json=update_data
     )
 
@@ -258,7 +241,7 @@ def test_update_user_same_email(
     }
 
     response = client.put(
-        f'/users/{user["public_id"]}/',
+        f'/auth/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -285,7 +268,7 @@ def test_update_user_same_phone(
     }
 
     response = client.put(
-        f'/users/{user["public_id"]}/',
+        f'/auth/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -311,7 +294,7 @@ def test_update_user_password(
     }
 
     response = client.put(
-        f'/users/{user["public_id"]}/',
+        f'/auth/me/{user["public_id"]}/',
         json=update_data
     )
 
@@ -331,7 +314,7 @@ def test_delete_user_success(
         email='john.doe@example.com'
     )
 
-    response = client.delete(f'/users/{user["public_id"]}/')
+    response = client.delete(f'/auth/me/{user["public_id"]}/')
 
     assert response.status_code == HTTPStatus.NO_CONTENT
     assert response.content == b''
@@ -342,7 +325,7 @@ def test_delete_user_not_found(
 ):
     fake_user_id = str(uuid.uuid4())
 
-    response = client.delete(f'/users/{fake_user_id}/')
+    response = client.delete(f'/auth/me/{fake_user_id}/')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json()['detail'] == 'User not found.'
@@ -357,31 +340,9 @@ def test_delete_user_verify_deletion(
         email='john.doe@example.com'
     )
 
-    delete_response = client.delete(f'/users/{user["public_id"]}/')
+    delete_response = client.delete(f'/auth/me/{user["public_id"]}/')
     assert delete_response.status_code == HTTPStatus.NO_CONTENT
 
-    get_response = client.get(f'/users/{user["public_id"]}/')
+    get_response = client.get(f'/auth/me/{user["public_id"]}/')
     assert get_response.status_code == HTTPStatus.NOT_FOUND
     assert get_response.json()['detail'] == 'User not found.'
-
-
-def test_delete_user_verify_list_exclusion(
-    client: TestClient,
-    create_user
-):
-    user1 = create_user(name='Alice', email='alice@example.com')
-    user2 = create_user(name='Bob', email='bob@example.com')
-
-    list_response = client.get('/users/')
-    assert list_response.status_code == HTTPStatus.OK
-    initial_users = list_response.json()['users']
-    assert len(initial_users) == len([user1, user2])
-
-    delete_response = client.delete(f'/users/{user1["public_id"]}/')
-    assert delete_response.status_code == HTTPStatus.NO_CONTENT
-
-    list_response = client.get('/users/')
-    assert list_response.status_code == HTTPStatus.OK
-    remaining_users = list_response.json()['users']
-    assert len(remaining_users) == 1
-    assert remaining_users[0]['public_id'] == user2['public_id']

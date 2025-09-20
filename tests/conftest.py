@@ -74,7 +74,7 @@ def create_user(client: TestClient):
         phone_number=None,
     ):
         response = client.post(
-            '/users/',
+            '/auth/register/',
             json={
                 'name': name,
                 'email': email,

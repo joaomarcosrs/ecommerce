@@ -6,12 +6,16 @@ from sqlalchemy.orm import Session
 
 from ecommerce.database import get_session
 from ecommerce.models import User
-from ecommerce.schemas import UserList, UserRead, UserSchema, UserUpdate
+from ecommerce.schemas import UserRead, UserSchema, UserUpdate
 
 app = FastAPI()
 
 
-@app.post("/users/", status_code=HTTPStatus.CREATED, response_model=UserRead)
+@app.post(
+    path="/auth/register/",
+    status_code=HTTPStatus.CREATED,
+    response_model=UserRead
+)
 def create_user(user: UserSchema, session: Session = Depends(get_session)):
     if user.email:
         db_user_by_email = session.scalar(
@@ -46,7 +50,10 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     return db_user
 
 
-@app.get('/users/{user_id}/', response_model=UserRead)
+@app.get(
+    path='/auth/me/{user_id}/',
+    response_model=UserRead
+)
 def read_user(user_id: str, session: Session = Depends(get_session)):
     user = session.scalar(
         select(User).where(
@@ -62,7 +69,10 @@ def read_user(user_id: str, session: Session = Depends(get_session)):
     return user
 
 
-@app.put('/users/{user_id}/', response_model=UserRead)
+@app.put(
+    path='/auth/me/{user_id}/',
+    response_model=UserRead
+)
 def update_user(
     user_id: str,
     user_update: UserUpdate,
@@ -110,7 +120,10 @@ def update_user(
     return db_user
 
 
-@app.delete('/users/{user_id}/', status_code=HTTPStatus.NO_CONTENT)
+@app.delete(
+    path='/auth/me/{user_id}/',
+    status_code=HTTPStatus.NO_CONTENT
+)
 def delete_user(
     user_id: str,
     session: Session = Depends(get_session)
@@ -126,19 +139,3 @@ def delete_user(
 
     session.delete(db_user)
     session.commit()
-
-
-@app.get('/users/', response_model=UserList)
-def read_users(
-    skip: int = 0,
-    limit: int = 10,
-    session: Session = Depends(get_session)
-):
-    users = session.scalars(
-        select(User).offset(skip).limit(limit)
-    ).all()
-
-    return {
-        'users': users,
-        'total': len(users)
-    }
