@@ -309,7 +309,6 @@ def test_delete_user_not_found(
     assert response.json()['detail'] == 'User not found.'
 
 
-# Testes para verificação de senha no update
 def test_update_user_password_success(
     client: TestClient,
     create_user
