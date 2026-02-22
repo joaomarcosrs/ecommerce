@@ -19,41 +19,35 @@ class User:
         Integer,
         primary_key=True,
         autoincrement=True,
-        init=False
+        init=False,
     )
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
-        nullable=False
+        nullable=False,
     )
-    password: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
     phone_number: Mapped[str] = mapped_column(
         String(255),
         unique=True,
-        nullable=True
+        nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
-        init=False
+        init=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
-        init=False
+        init=False,
     )
     public_id: Mapped[str] = mapped_column(
         String(26),
         nullable=False,
-        default_factory=generate_public_id
+        default_factory=generate_public_id,
     )

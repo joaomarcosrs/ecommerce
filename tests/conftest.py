@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from ecommerce.app import app
-from ecommerce.database import get_session
-from ecommerce.public.models.users import table_registry
+from ecommerce.core.database import get_session
+from ecommerce.users.models import table_registry
 
 
 @pytest.fixture
@@ -87,3 +87,22 @@ def create_user(client: TestClient):
         return response.json()
 
     return _create_user
+
+
+@pytest.fixture
+def auth_headers(client: TestClient):
+    def _auth_headers(email: str, password: str = 'secret') -> dict[str, str]:
+        response = client.post(
+            '/auth/token/',
+            data={
+                'username': email,
+                'password': password,
+            },
+        )
+        assert response.status_code == HTTPStatus.OK
+        access_token = response.json()['access_token']
+        return {
+            'Authorization': f'Bearer {access_token}',
+        }
+
+    return _auth_headers

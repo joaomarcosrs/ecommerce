@@ -3,8 +3,8 @@ from dataclasses import asdict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ecommerce.database import get_session
-from ecommerce.public.models.users import User
+from ecommerce.core.database import get_session
+from ecommerce.users.models import User
 
 
 def test_get_session_function():

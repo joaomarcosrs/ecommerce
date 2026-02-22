@@ -70,27 +70,54 @@ def test_create_user_conflict_phone(
 
 def test_read_user_not_found(
     client: TestClient,
+    auth_headers,
+    create_user,
 ):
     fake_user_id = str(uuid.uuid4())
+    user = create_user(
+        name='Auth User',
+        email='auth.user@example.com',
+    )
+    headers = auth_headers(user['email'])
 
     response = client.get(
         url=f'/users/me/{fake_user_id}/',
+        headers=headers,
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json()['detail'] == 'User not found.'
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()['detail'] == 'Not enough permissions.'
+
+
+def test_read_user_unauthorized_without_token(
+    client: TestClient,
+    create_user,
+):
+    user = create_user(
+        name='No Token User',
+        email='no.token@example.com',
+    )
+
+    response = client.get(url=f'/users/me/{user["public_id"]}/')
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()['detail'] == 'Not authenticated'
 
 
 def test_read_user(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
         email='john.doe@example.com'
     )
+    headers = auth_headers(user['email'])
+
     response = client.get(
         url=f'/users/me/{user['public_id']}/',
+        headers=headers,
     )
     assert response.status_code == HTTPStatus.OK
 
@@ -102,7 +129,8 @@ def test_read_user(
 
 def test_update_user_success(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -114,10 +142,12 @@ def test_update_user_success(
         'name': 'John Updated',
         'email': 'john.updated@example.com'
     }
+    headers = auth_headers(user['email'])
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -131,7 +161,8 @@ def test_update_user_success(
 
 def test_update_user_partial(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -142,10 +173,12 @@ def test_update_user_partial(
     update_data = {
         'name': 'John Updated'
     }
+    headers = auth_headers(user['email'])
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -157,9 +190,16 @@ def test_update_user_partial(
 
 
 def test_update_user_not_found(
-    client: TestClient
+    client: TestClient,
+    create_user,
+    auth_headers,
 ):
     fake_user_id = str(uuid.uuid4())
+    user = create_user(
+        name='Auth User',
+        email='auth.user.2@example.com',
+    )
+    headers = auth_headers(user['email'])
 
     update_data = {
         'name': 'John Updated'
@@ -167,16 +207,18 @@ def test_update_user_not_found(
 
     response = client.put(
         f'/users/me/{fake_user_id}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json()['detail'] == 'User not found.'
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()['detail'] == 'Not enough permissions.'
 
 
 def test_update_user_email_conflict(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user1 = create_user(
         name='John Doe',
@@ -191,10 +233,12 @@ def test_update_user_email_conflict(
     update_data = {
         'email': 'jane.doe@example.com'
     }
+    headers = auth_headers(user1['email'])
 
     response = client.put(
         f'/users/me/{user1["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.CONFLICT
@@ -203,7 +247,8 @@ def test_update_user_email_conflict(
 
 def test_update_user_phone_conflict(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user1 = create_user(
         name='John Doe',
@@ -220,10 +265,12 @@ def test_update_user_phone_conflict(
     update_data = {
         'phone_number': '9876543210'
     }
+    headers = auth_headers(user1['email'])
 
     response = client.put(
         f'/users/me/{user1["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.CONFLICT
@@ -232,7 +279,8 @@ def test_update_user_phone_conflict(
 
 def test_update_user_same_email(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -243,10 +291,12 @@ def test_update_user_same_email(
         'name': 'John Updated',
         'email': 'john.doe@example.com'
     }
+    headers = auth_headers(user['email'])
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -258,7 +308,8 @@ def test_update_user_same_email(
 
 def test_update_user_same_phone(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -270,10 +321,12 @@ def test_update_user_same_phone(
         'name': 'John Updated',
         'phone_number': '1234567890'
     }
+    headers = auth_headers(user['email'])
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -285,33 +338,46 @@ def test_update_user_same_phone(
 
 def test_delete_user_success(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
         email='john.doe@example.com'
     )
 
-    response = client.delete(f'/users/me/{user["public_id"]}/')
+    headers = auth_headers(user['email'])
+    response = client.delete(
+        f'/users/me/{user["public_id"]}/',
+        headers=headers,
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted.'}
 
 
 def test_delete_user_not_found(
-    client: TestClient
+    client: TestClient,
+    create_user,
+    auth_headers,
 ):
     fake_user_id = str(uuid.uuid4())
+    user = create_user(
+        name='Auth User',
+        email='auth.user.3@example.com',
+    )
+    headers = auth_headers(user['email'])
 
-    response = client.delete(f'/users/me/{fake_user_id}/')
+    response = client.delete(f'/users/me/{fake_user_id}/', headers=headers)
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json()['detail'] == 'User not found.'
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json()['detail'] == 'Not enough permissions.'
 
 
 def test_update_user_password_success(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -323,10 +389,12 @@ def test_update_user_password_success(
         'current_password': 'old_password',
         'password': 'new_password'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -337,7 +405,8 @@ def test_update_user_password_success(
 
 def test_update_user_password_wrong_current_password(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -349,10 +418,12 @@ def test_update_user_password_wrong_current_password(
         'current_password': 'wrong_password',
         'password': 'new_password'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -361,7 +432,8 @@ def test_update_user_password_wrong_current_password(
 
 def test_update_user_password_missing_current_password(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -372,10 +444,12 @@ def test_update_user_password_missing_current_password(
     update_data = {
         'password': 'new_password'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -384,7 +458,8 @@ def test_update_user_password_missing_current_password(
 
 def test_update_user_password_missing_new_password(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -395,10 +470,12 @@ def test_update_user_password_missing_new_password(
     update_data = {
         'current_password': 'old_password'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -407,7 +484,8 @@ def test_update_user_password_missing_new_password(
 
 def test_update_user_without_password_fields(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -419,10 +497,12 @@ def test_update_user_without_password_fields(
         'name': 'John Updated',
         'email': 'john.updated@example.com'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -433,7 +513,8 @@ def test_update_user_without_password_fields(
 
 def test_update_user_password_with_other_fields(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -448,10 +529,12 @@ def test_update_user_password_with_other_fields(
         'password': 'new_password',
         'phone_number': '9876543210'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -462,7 +545,8 @@ def test_update_user_password_with_other_fields(
 
 def test_update_user_password_empty_current_password(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -474,10 +558,12 @@ def test_update_user_password_empty_current_password(
         'current_password': '',
         'password': 'new_password'
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -486,7 +572,8 @@ def test_update_user_password_empty_current_password(
 
 def test_update_user_password_empty_new_password(
     client: TestClient,
-    create_user
+    create_user,
+    auth_headers,
 ):
     user = create_user(
         name='John Doe',
@@ -498,10 +585,12 @@ def test_update_user_password_empty_new_password(
         'current_password': 'old_password',
         'password': ''
     }
+    headers = auth_headers(user['email'], 'old_password')
 
     response = client.put(
         f'/users/me/{user["public_id"]}/',
-        json=update_data
+        json=update_data,
+        headers=headers,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST

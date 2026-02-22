@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from ecommerce.settings import Settings
+from ecommerce.core.settings import settings
 
-engine = create_engine(Settings().DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 
 
 def get_session() -> Session:

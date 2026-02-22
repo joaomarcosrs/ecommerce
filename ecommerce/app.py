@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
-from ecommerce.public.routes import auth, users
+from ecommerce.api import api_router
 
 app = FastAPI()
 
-app.include_router(auth.router)
-app.include_router(users.router)
+app.include_router(api_router)

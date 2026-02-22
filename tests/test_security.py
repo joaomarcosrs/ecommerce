@@ -1,6 +1,6 @@
 from jwt import decode
 
-from ecommerce.security import ALGORITHM, SECRET_KEY, create_access_token
+from ecommerce.core.security import ALGORITHM, SECRET_KEY, create_access_token
 
 
 def test_jwt():
