@@ -3,6 +3,7 @@ from dataclasses import asdict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ecommerce import models as app_models
 from ecommerce.core.database import get_session
 from ecommerce.users.models import User
 
@@ -45,3 +46,10 @@ def test_create_user(session: Session, mock_db_time):
         'created_at': time,
         'updated_at': time
     }
+
+
+def test_models_module_registers_all_tables():
+    tables = app_models.table_registry.metadata.tables
+
+    assert 'users' in tables
+    assert 'products' in tables

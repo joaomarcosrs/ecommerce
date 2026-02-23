@@ -1,6 +1,7 @@
-from ecommerce.users.models import User, table_registry
+from ecommerce.core.utils.schemas import Message
+from ecommerce.users.models import User
 from ecommerce.users.repositories import UserRepository
-from ecommerce.users.schemas import Message, UserCreate, UserRead, UserUpdate
+from ecommerce.users.schemas import UserCreate, UserRead, UserUpdate
 from ecommerce.users.services import UserService
 
 __all__ = [
@@ -11,5 +12,4 @@ __all__ = [
     'UserRepository',
     'UserService',
     'UserUpdate',
-    'table_registry',
 ]

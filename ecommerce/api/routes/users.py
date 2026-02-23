@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from ecommerce.core.database import get_session
 from ecommerce.core.security import get_token_subject
+from ecommerce.core.utils.schemas import Message
 from ecommerce.users.models import User
 from ecommerce.users.repositories import UserRepository
-from ecommerce.users.schemas import Message, UserRead, UserUpdate
+from ecommerce.users.schemas import UserRead, UserUpdate
 from ecommerce.users.services import (
     EmailAlreadyExistsError,
     InvalidCurrentPasswordError,

@@ -8,8 +8,8 @@ from ecommerce.core.utils.ids import generate_public_id
 
 
 @table_registry.mapped_as_dataclass
-class User:
-    __tablename__ = 'users'
+class Product:
+    __tablename__ = 'products'
 
     id: Mapped[int] = mapped_column(
         Integer,
@@ -21,19 +21,17 @@ class User:
         String(255),
         nullable=False
     )
-    email: Mapped[str] = mapped_column(
+    description: Mapped[str] = mapped_column(
         String(255),
-        unique=True,
-        nullable=False,
+        nullable=True
     )
-    password: Mapped[str] = mapped_column(
-        String(255),
+    price: Mapped[float] = mapped_column(
         nullable=False
     )
-    phone_number: Mapped[str] = mapped_column(
-        String(255),
+    sku: Mapped[str] = mapped_column(
+        String(50),
         unique=True,
-        nullable=True,
+        nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

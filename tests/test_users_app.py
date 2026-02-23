@@ -3,6 +3,8 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
+from ecommerce.users.services import UserNotFoundError, UserService
+
 PASSWORD_REQUIRED_MSG = (
     'Both current_password and password are required to change password.'
 )
@@ -68,7 +70,7 @@ def test_create_user_conflict_phone(
     assert response.json()['detail'] == 'Phone number already in use.'
 
 
-def test_read_user_not_found(
+def test_read_user_not_enough_permissions(
     client: TestClient,
     auth_headers,
     create_user,
@@ -104,6 +106,32 @@ def test_read_user_unauthorized_without_token(
     assert response.json()['detail'] == 'Not authenticated'
 
 
+def test_read_user_unauthorized_when_token_user_not_found(
+    client: TestClient,
+    create_user,
+    auth_headers,
+):
+    user = create_user(
+        name='Deleted User',
+        email='deleted.user@example.com',
+    )
+    headers = auth_headers(user['email'])
+
+    delete_response = client.delete(
+        url=f'/users/me/{user["public_id"]}/',
+        headers=headers,
+    )
+    assert delete_response.status_code == HTTPStatus.OK
+
+    response = client.get(
+        url=f'/users/me/{user["public_id"]}/',
+        headers=headers,
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json()['detail'] == 'Could not validate credentials.'
+
+
 def test_read_user(
     client: TestClient,
     create_user,
@@ -116,7 +144,7 @@ def test_read_user(
     headers = auth_headers(user['email'])
 
     response = client.get(
-        url=f'/users/me/{user['public_id']}/',
+        url=f'/users/me/{user["public_id"]}/',
         headers=headers,
     )
     assert response.status_code == HTTPStatus.OK
@@ -125,6 +153,36 @@ def test_read_user(
     assert body['public_id'] == user['public_id']
     assert body['name'] == 'John Doe'
     assert body['email'] == 'john.doe@example.com'
+
+
+def test_read_user_not_found(
+    client: TestClient,
+    create_user,
+    auth_headers,
+    monkeypatch,
+):
+    user = create_user(
+        name='Auth User',
+        email='auth.user@example.com',
+    )
+    headers = auth_headers(user['email'])
+
+    def mock_get_user_by_public_id(*args, **kwargs):
+        raise UserNotFoundError()
+
+    monkeypatch.setattr(
+        UserService,
+        'get_user_by_public_id',
+        mock_get_user_by_public_id,
+    )
+
+    response = client.get(
+        url=f'/users/me/{user["public_id"]}/',
+        headers=headers,
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'User not found.'
 
 
 def test_update_user_success(
@@ -189,7 +247,7 @@ def test_update_user_partial(
     assert updated_user['phone_number'] == '1234567890'
 
 
-def test_update_user_not_found(
+def test_update_user_not_enough_permissions(
     client: TestClient,
     create_user,
     auth_headers,
@@ -213,6 +271,41 @@ def test_update_user_not_found(
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json()['detail'] == 'Not enough permissions.'
+
+
+def test_update_user_not_found(
+    client: TestClient,
+    create_user,
+    auth_headers,
+    monkeypatch,
+):
+    user = create_user(
+        name='Auth User',
+        email='auth.user@example.com'
+    )
+    headers = auth_headers(user['email'])
+
+    def mock_update_user(*args, **kwargs):
+        raise UserNotFoundError()
+
+    monkeypatch.setattr(
+        UserService,
+        'update_user',
+        mock_update_user,
+    )
+
+    update_data = {
+        'name': 'John Updated'
+    }
+
+    response = client.put(
+        f'/users/me/{user["public_id"]}/',
+        json=update_data,
+        headers=headers,
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'User not found.'
 
 
 def test_update_user_email_conflict(
@@ -356,7 +449,7 @@ def test_delete_user_success(
     assert response.json() == {'message': 'User deleted.'}
 
 
-def test_delete_user_not_found(
+def test_delete_user_not_enough_permissions(
     client: TestClient,
     create_user,
     auth_headers,
@@ -372,6 +465,36 @@ def test_delete_user_not_found(
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json()['detail'] == 'Not enough permissions.'
+
+
+def test_delete_user_not_found(
+    client: TestClient,
+    create_user,
+    auth_headers,
+    monkeypatch,
+):
+    user = create_user(
+        name='Auth User',
+        email='auth.user@example.com',
+    )
+    headers = auth_headers(user['email'])
+
+    def mock_delete_user(*args, **kwargs):
+        raise UserNotFoundError()
+
+    monkeypatch.setattr(
+        UserService,
+        'delete_user',
+        mock_delete_user,
+    )
+
+    response = client.delete(
+        f'/users/me/{user["public_id"]}/',
+        headers=headers
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json()['detail'] == 'User not found.'
 
 
 def test_update_user_password_success(
