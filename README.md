@@ -8,14 +8,36 @@ API de e-commerce construída com FastAPI, SQLAlchemy, Alembic e autenticação 
 
 ### Requisitos
 
-- Python 3.12+
-- Poetry
+- [uv](https://docs.astral.sh/uv/) — gerencia o Python e as dependências do projeto
 
-### Instalação (Poetry)
+> O Python não é mais gerenciado pelo pyenv/Poetry. A versão está fixada em
+> `.python-version` (3.12) e o uv baixa um interpretador gerenciado no primeiro
+> `uv sync` — nada de depender de um Python instalado globalmente.
+
+### Instalação
 
 ```bash
-poetry install
-poetry shell
+uv sync
+```
+
+Isso cria o `.venv`, baixa o Python 3.12 (se necessário) e instala as
+dependências de produção e de desenvolvimento (`dev`).
+
+### Ambiente
+
+Não há ativação automática. `uv run` usa o `.venv` do projeto e o sincroniza
+antes de executar, então não é preciso ativar nada para rodar comandos:
+
+```bash
+uv run pytest
+```
+
+Para um shell ativado (comandos sem o prefixo `uv run`), rode `uv sync` uma vez
+e ative:
+
+```bash
+uv sync
+source .venv/bin/activate
 ```
 
 ### Configuração de ambiente
@@ -32,14 +54,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ### Banco de dados (SQLite)
 
 ```bash
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### Rodando a API
 
 ```bash
-poetry run task run
+uv run task run
 ```
+
+Equivalente a `uv run fastapi dev ecommerce/app.py`.
 
 Servidor: `http://127.0.0.1:8000`
 
@@ -49,9 +73,22 @@ Servidor: `http://127.0.0.1:8000`
 ### Qualidade e testes
 
 ```bash
-poetry run task lint
-poetry run pytest -q
+uv run task lint
+uv run pytest -q
+uv run task test   # lint + pytest com cobertura + relatório HTML
 ```
+
+### Gerenciando dependências
+
+```bash
+uv add <pacote>              # dependência de produção
+uv add --group dev <pacote>  # dependência de desenvolvimento
+uv remove <pacote>
+uv lock                      # atualiza o uv.lock
+uv sync                      # aplica o lock no .venv
+```
+
+`uv.lock` e `.python-version` devem ser commitados para reproduzir o ambiente.
 
 ### Rotas atuais
 
@@ -59,6 +96,14 @@ poetry run pytest -q
 
 - `POST /auth/register/` — cadastrar usuário
 - `POST /auth/token/` — login e obter token JWT
+
+#### Products
+
+- `POST /products/` — criar produto
+- `GET /products/?q=<termo>` — listar/buscar produtos
+- `GET /products/{product_id}/` — consultar produto
+- `PUT /products/{product_id}/` — atualizar produto
+- `DELETE /products/{product_id}/` — remover produto
 
 #### Users (Bearer Token obrigatório)
 
@@ -96,14 +141,42 @@ curl -X GET http://127.0.0.1:8000/users/me/{PUBLIC_ID}/ \
     -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 
+#### 4) Criar produto
+
+```bash
+curl -X POST http://127.0.0.1:8000/products/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "Camiseta",
+        "description": "Camiseta de algodão",
+        "price": "59.90",
+        "sku": "CAM-001"
+    }'
+```
+
 ### Arquitetura
 
 - `ecommerce/api`: camada HTTP
 - `ecommerce/auth`: domínio de autenticação
+- `ecommerce/products`: domínio de produtos
 - `ecommerce/users`: domínio de usuários
 - `ecommerce/core`: infraestrutura compartilhada
 
 ### Troubleshooting (PT-BR)
+
+- **`Library not loaded: .../libpython3.12.dylib`**
+    - O `.venv` era do Poetry e apontava para um Python do pyenv que foi removido.
+    - O projeto agora usa uv: apague o venv quebrado e ressincronize.
+      ```bash
+      rm -rf .venv
+      uv sync
+      ```
+
+- **`uv: command not found`**
+    - Instale o uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+
+- **`uv sync --frozen` reclama que o lock está desatualizado**
+    - Rode `uv lock` e commite o `uv.lock`.
 
 - **Erro de token (`Could not validate credentials`)**
     - Verifique se o header está como `Authorization: Bearer <token>`.
@@ -118,14 +191,10 @@ curl -X GET http://127.0.0.1:8000/users/me/{PUBLIC_ID}/ \
 
 - **Falha ao iniciar com erro de banco**
     - Confirme `DATABASE_URL` no `.env`.
-    - Rode `alembic upgrade head` antes de subir a API.
+    - Rode `uv run alembic upgrade head` antes de subir a API.
 
 - **Tabela não existe / migration pendente**
-    - Rode: `alembic upgrade head`.
-
-- **Poetry/env não reconhecido**
-    - Reinstale dependências com `poetry install`.
-    - Ative com `poetry shell` ou use `poetry run <comando>`.
+    - Rode: `uv run alembic upgrade head`.
 
 ---
 
@@ -135,14 +204,36 @@ E-commerce API built with FastAPI, SQLAlchemy, Alembic, and JWT authentication.
 
 ### Requirements
 
-- Python 3.12+
-- Poetry
+- [uv](https://docs.astral.sh/uv/) — manages the project's Python and dependencies
 
-### Installation (Poetry)
+> Python is no longer managed by pyenv/Poetry. The version is pinned in
+> `.python-version` (3.12) and uv downloads a managed interpreter on the first
+> `uv sync` — no reliance on a globally installed Python.
+
+### Installation
 
 ```bash
-poetry install
-poetry shell
+uv sync
+```
+
+This creates `.venv`, downloads Python 3.12 if needed, and installs production
+and development (`dev`) dependencies.
+
+### Environment
+
+There is no automatic activation. `uv run` uses the project's `.venv` and syncs
+it before executing, so no activation is needed to run commands:
+
+```bash
+uv run pytest
+```
+
+For an activated shell (commands without the `uv run` prefix), run `uv sync`
+once and activate:
+
+```bash
+uv sync
+source .venv/bin/activate
 ```
 
 ### Environment configuration
@@ -159,14 +250,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ### Database (SQLite)
 
 ```bash
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### Running the API
 
 ```bash
-poetry run task run
+uv run task run
 ```
+
+Equivalent to `uv run fastapi dev ecommerce/app.py`.
 
 Server: `http://127.0.0.1:8000`
 
@@ -176,9 +269,22 @@ Server: `http://127.0.0.1:8000`
 ### Quality and tests
 
 ```bash
-poetry run task lint
-poetry run pytest -q
+uv run task lint
+uv run pytest -q
+uv run task test   # lint + pytest with coverage + HTML report
 ```
+
+### Managing dependencies
+
+```bash
+uv add <package>              # production dependency
+uv add --group dev <package>  # development dependency
+uv remove <package>
+uv lock                       # update uv.lock
+uv sync                       # apply the lock to .venv
+```
+
+Commit `uv.lock` and `.python-version` so the environment is reproducible.
 
 ### Current routes
 
@@ -186,6 +292,14 @@ poetry run pytest -q
 
 - `POST /auth/register/` — sign up
 - `POST /auth/token/` — login and get JWT token
+
+#### Products
+
+- `POST /products/` — create product
+- `GET /products/?q=<term>` — list/search products
+- `GET /products/{product_id}/` — read product
+- `PUT /products/{product_id}/` — update product
+- `DELETE /products/{product_id}/` — delete product
 
 #### Users (Bearer Token required)
 
@@ -223,14 +337,42 @@ curl -X GET http://127.0.0.1:8000/users/me/{PUBLIC_ID}/ \
     -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
+#### 4) Create product
+
+```bash
+curl -X POST http://127.0.0.1:8000/products/ \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "T-Shirt",
+        "description": "Cotton t-shirt",
+        "price": "59.90",
+        "sku": "TSH-001"
+    }'
+```
+
 ### Architecture
 
 - `ecommerce/api`: HTTP layer
 - `ecommerce/auth`: authentication domain
+- `ecommerce/products`: products domain
 - `ecommerce/users`: users domain
 - `ecommerce/core`: shared infrastructure
 
 ### Troubleshooting (EN)
+
+- **`Library not loaded: .../libpython3.12.dylib`**
+    - The old `.venv` belonged to Poetry and pointed at a pyenv Python that was removed.
+    - The project now uses uv: delete the broken venv and resync.
+      ```bash
+      rm -rf .venv
+      uv sync
+      ```
+
+- **`uv: command not found`**
+    - Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+
+- **`uv sync --frozen` complains the lock is out of date**
+    - Run `uv lock` and commit `uv.lock`.
 
 - **Token error (`Could not validate credentials`)**
     - Ensure the header is `Authorization: Bearer <token>`.
@@ -245,11 +387,7 @@ curl -X GET http://127.0.0.1:8000/users/me/{PUBLIC_ID}/ \
 
 - **Database startup errors**
     - Verify `DATABASE_URL` in `.env`.
-    - Run `alembic upgrade head` before starting the API.
+    - Run `uv run alembic upgrade head` before starting the API.
 
 - **Table not found / pending migrations**
-    - Run: `alembic upgrade head`.
-
-- **Poetry/environment issues**
-    - Reinstall dependencies with `poetry install`.
-    - Activate with `poetry shell` or use `poetry run <command>`.
+    - Run: `uv run alembic upgrade head`.
