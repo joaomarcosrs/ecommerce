@@ -63,7 +63,7 @@ uv run alembic upgrade head
 uv run task run
 ```
 
-Equivalente a `uv run fastapi dev ecommerce/app.py`.
+Equivalente a `uv run fastapi dev ecommerce/backend/app.py`.
 
 Servidor: `http://127.0.0.1:8000`
 
@@ -259,7 +259,7 @@ uv run alembic upgrade head
 uv run task run
 ```
 
-Equivalent to `uv run fastapi dev ecommerce/app.py`.
+Equivalent to `uv run fastapi dev ecommerce/backend/app.py`.
 
 Server: `http://127.0.0.1:8000`
 
